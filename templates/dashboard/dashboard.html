@@ -1,0 +1,215 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - ResumeIQ{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Welcome Header -->
+    <div class="card-glass p-4 p-md-5 mb-4 position-relative overflow-hidden">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <div class="hero-badge mb-3">
+                    <i class="bi bi-speedometer2 text-warning me-1"></i> Dashboard Overview
+                </div>
+                <h1 class="display-4 fw-extrabold text-white mb-2">
+                    Welcome, <span class="gradient-text">{{ user.username }}</span> 👋
+                </h1>
+                <p class="text-white fs-7 mb-0">
+                    Your AI Resume Screening & Career Intelligence Control Center
+                </p>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Metric Snapshot Row -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-4">
+            <div class="stat-card">
+                <div class="stat-icon bg-primary bg-opacity-20 text-white">
+                    <i class="bi bi-file-earmark-pdf-fill"></i>
+                </div>
+                <div>
+                    <h3 class="mb-0 fw-extrabold text-white">{{ total_resumes }}</h3>
+                    <small class="text-white">Uploaded Resumes</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-card">
+                <div class="stat-icon bg-success bg-opacity-20 text-white">
+                    <i class="bi bi-trophy-fill"></i>
+                </div>
+                <div>
+                    <h3 class="mb-0 fw-extrabold text-white">{{ highest_score }} / 100</h3>
+                    <small class="text-white">Best ATS Score</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-card">
+                <div class="stat-icon bg-info bg-opacity-20 text-white">
+                    <i class="bi bi-cpu-fill"></i>
+                </div>
+                <div>
+                    <h6 class="mb-0 fw-bold text-white text-truncate" style="max-width: 180px;">
+                        {% if latest_resume and latest_resume.predicted_role %}{{ latest_resume.predicted_role }}{% else %}No uploads{% endif %}
+                    </h6>
+                    <small class="text-white">Latest Predicted Role</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Action Cards Grid -->
+    <div class="row g-4 mb-5">
+        <div class="col-md-4">
+            <div class="card-glass card-glass-hover p-4 h-100 d-flex flex-column justify-content-between">
+                <div>
+                    <div class="icon-box-lg bg-primary bg-opacity-20 text-white mb-3">
+                        <i class="bi bi-file-earmark-arrow-up-fill"></i>
+                    </div>
+                    <h4 class="text-white mb-2">Upload Resume</h4>
+                    <p class="text-gray small mb-4">
+                        Upload your PDF resume to extract key skills, predict matching roles, and calculate ATS
+                        compatibility scores.
+                    </p>
+                </div>
+                <a href="{% url 'upload_resume' %}" class="btn btn-glow w-100 py-2">
+                    <i class="bi bi-upload me-1"></i> Start Upload
+                </a>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card-glass card-glass-hover p-4 h-100 d-flex flex-column justify-content-between">
+                <div>
+                    <div class="icon-box-lg bg-success bg-opacity-20 text-white mb-3"
+                        style="background: rgba(16, 185, 129, 0.2);">
+                        <i class="bi bi-clock-history"></i>
+                    </div>
+                    <h4 class="text-white mb-2">Analysis History</h4>
+                    <p class="text-white small mb-4">
+                        Review all your previously uploaded resumes, score history, predicted roles, and skill gap
+                        reports.
+                    </p>
+                </div>
+                <a href="{% url 'resume_history' %}" class="btn btn-glass w-100 py-2">
+                    <i class="bi bi-card-checklist me-1"></i> View History ({{ total_resumes }})
+                </a>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card-glass card-glass-hover p-4 h-100 d-flex flex-column justify-content-between">
+                <div>
+                    <div class="icon-box-lg bg-purple bg-opacity-20 text-white mb-3"
+                        style="background: rgba(6, 182, 212, 0.2);">
+                        <i class="bi bi-person-lines-fill"></i>
+                    </div>
+                    <h4 class="text-white mb-2">Account Profile</h4>
+                    <p class="text-white small mb-4">
+                        Manage your user account credentials, update email address, change password, and view activity
+                        overview.
+                    </p>
+                </div>
+                <a href="{% url 'profile' %}" class="btn btn-glass w-100 py-2">
+                    <i class="bi bi-gear-fill me-1"></i> Manage Profile
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity & Optimization Tips Grid -->
+    <div class="row g-4">
+        <!-- Recent Uploads Table preview -->
+        <div class="col-lg-7">
+            <div class="card-glass p-4 h-100">
+                <div
+                    class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom border-secondary border-opacity-25">
+                    <h5 class="text-white fw-bold mb-0">
+                        <i class="bi bi-clock me-2 text-primary"></i> Recent Uploads
+                    </h5>
+                    <a href="{% url 'resume_history' %}" class="small text-primary text-decoration-none">View All</a>
+                </div>
+
+                {% if recent_resumes %}
+                <div class="table-responsive">
+                    <table class="table table-glass align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Resume</th>
+                                <th>Role</th>
+                                <th>Score</th>
+                                <th class="text-end">View</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for r in recent_resumes %}
+                            <tr>
+                                <td class="fw-bold text-white small">{{ r.resume_file.name|cut:"resumes/" }}</td>
+                                <td>
+                                    <span class="badge bg-primary bg-opacity-20 text-white small">
+                                        {{ r.predicted_role|default:"Pending" }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span
+                                        class="badge {% if r.resume_score >= 80 %}bg-success{% elif r.resume_score >= 60 %}bg-warning text-dark{% else %}bg-danger{% endif %} small">
+                                        {{ r.resume_score }}
+                                    </span>
+                                </td>
+                                <td class="text-end">
+                                    <a href="{% url 'resume_detail' r.pk %}" class="btn btn-sm btn-glass px-2 py-1">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="p-4 text-center text-muted small">
+                    <i class="bi bi-inbox fs-2 d-block mb-2 text-secondary"></i>
+                    No resumes uploaded yet. Click "Upload Resume" above to begin.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Optimization Guidelines Widget -->
+        <div class="col-lg-5">
+            <div class="card-glass p-4 h-100">
+                <div class="d-flex align-items-center gap-2 mb-3 pb-2 border-bottom border-secondary border-opacity-25">
+                    <i class="bi bi-lightbulb-fill text-warning fs-5"></i>
+                    <h5 class="text-white fw-bold mb-0">ATS Optimization Guidelines</h5>
+                </div>
+
+                <div class="d-flex flex-column gap-3">
+                    <div class="p-3 bg-dark bg-opacity-40 rounded-3 border border-secondary border-opacity-25">
+                        <div class="fw-bold text-info mb-1 small"><i class="bi bi-key-fill me-1"></i> Tech Keyword
+                            Density</div>
+                        <p class="text-white small mb-0">Explicitly mention core tech stack terms like Python, Django,
+                            SQL, REST APIs, and Machine Learning.</p>
+                    </div>
+
+                    <div class="p-3 bg-dark bg-opacity-40 rounded-3 border border-secondary border-opacity-25">
+                        <div class="fw-bold text-success mb-1 small"><i class="bi bi-folder-check me-1"></i> Standard
+                            Section Headings</div>
+                        <p class="text-white small mb-0">Include distinct headings: "Education", "Projects", "Skills",
+                            "Experience", and "Certifications".</p>
+                    </div>
+
+                    <div class="p-3 bg-dark bg-opacity-40 rounded-3 border border-secondary border-opacity-25">
+                        <div class="fw-bold text-warning mb-1 small"><i class="bi bi-file-earmark-pdf me-1"></i> Clean
+                            PDF Text</div>
+                        <p class="text-white small mb-0">Upload standard text-based PDFs to ensure our NLP engine
+                            accurately extracts text without OCR loss.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

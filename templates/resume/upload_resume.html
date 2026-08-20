@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+
+{% block title %}Upload & Analyze Resume - ResumeIQ{% endblock %}
+
+{% block content %}
+<div class="container py-5" style="max-width: 800px;">
+    <!-- Header -->
+    <div class="text-center mb-5">
+        <span class="hero-badge mb-3">
+            <i class="bi bi-cpu-fill text-warning me-1"></i> AI Resume Analyzer
+        </span>
+        <h1 class="display-4 fw-extrabold text-white mb-2">Upload Your Resume</h1>
+        <p class="text-muted fs-5">
+            Select or drag your PDF resume to extract skills, predict job roles, and calculate your ATS compatibility score.
+        </p>
+    </div>
+
+    <!-- Upload Glass Card -->
+    <div class="card-glass p-4 p-md-5">
+        <form method="POST" enctype="multipart/form-data" id="resumeUploadForm">
+            {% csrf_token %}
+            
+            <div class="dropzone-container mb-4" id="dropzone">
+                {{ form.resume_file }}
+                
+                <div id="dropzone-prompt">
+                    <i class="bi bi-cloud-arrow-up-fill dropzone-icon"></i>
+                    <h4 class="text-white fw-bold mb-2">Drag & Drop your Resume here</h4>
+                    <p class="text-muted small mb-3">or click anywhere to browse files on your computer</p>
+                    <span class="badge bg-secondary bg-opacity-30 text-white border border-secondary px-3 py-2 rounded-pill">
+                        <i class="bi bi-file-earmark-pdf-fill text-danger me-1"></i> PDF Format Supported (Up to 10MB)
+                    </span>
+                </div>
+
+                <div id="file-selected-info" class="d-none">
+                    <div class="rounded-circle bg-success bg-opacity-20 text-success mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 70px; height: 70px;">
+                        <i class="bi bi-file-earmark-check-fill fs-1"></i>
+                    </div>
+                    <h5 class="text-white fw-bold mb-1" id="selected-filename">filename.pdf</h5>
+                    <p class="text-success small mb-3"><i class="bi bi-check-circle-fill me-1"></i> File Ready for AI Processing</p>
+                    <button type="button" class="btn btn-sm btn-glass text-muted" id="change-file-btn">
+                        <i class="bi bi-arrow-repeat me-1"></i> Choose Different File
+                    </button>
+                </div>
+            </div>
+
+            {% if form.errors %}
+            <div class="alert alert-danger card-glass mb-4">
+                {{ form.errors }}
+            </div>
+            {% endif %}
+
+            <div class="d-grid">
+                <button type="submit" class="btn btn-glow btn-lg py-3" id="submitBtn">
+                    <i class="bi bi-magic me-2"></i> Analyze Resume with AI
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Info Banner -->
+    <div class="d-flex align-items-center justify-content-center gap-4 text-muted small mt-4">
+        <div><i class="bi bi-shield-check text-success me-1"></i> Privacy Protected</div>
+        <div>•</div>
+        <div><i class="bi bi-lightning-charge text-warning me-1"></i> Instant Parsing</div>
+        <div>•</div>
+        <div><i class="bi bi-cpu text-info me-1"></i> NLP Extraction</div>
+    </div>
+</div>
+
+<!-- Full Screen Loading Overlay -->
+<div id="loadingOverlay" class="loading-overlay d-none">
+    <div class="scanner-spinner mb-4"></div>
+    <h3 class="text-white fw-bold mb-2">Analyzing Resume...</h3>
+    <p class="text-muted mb-3" id="loadingStepText">Extracting text & running machine learning model</p>
+    <div class="d-flex gap-2">
+        <span class="badge bg-primary bg-opacity-30 text-primary border border-primary px-3 py-1">Extracting NLP Text</span>
+        <span class="badge bg-purple bg-opacity-30 text-info border border-info px-3 py-1">Predicting Role</span>
+        <span class="badge bg-success bg-opacity-30 text-success border border-success px-3 py-1">Computing ATS Score</span>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const fileInput = document.getElementById("pdf-file-input");
+        const dropzonePrompt = document.getElementById("dropzone-prompt");
+        const fileSelectedInfo = document.getElementById("file-selected-info");
+        const selectedFilename = document.getElementById("selected-filename");
+        const changeFileBtn = document.getElementById("change-file-btn");
+        const form = document.getElementById("resumeUploadForm");
+        const loadingOverlay = document.getElementById("loadingOverlay");
+        const dropzone = document.getElementById("dropzone");
+
+        fileInput.addEventListener("change", function() {
+            if (fileInput.files && fileInput.files[0]) {
+                const file = fileInput.files[0];
+                selectedFilename.textContent = file.name;
+                dropzonePrompt.classList.add("d-none");
+                fileSelectedInfo.classList.remove("d-none");
+            }
+        });
+
+        if (changeFileBtn) {
+            changeFileBtn.addEventListener("click", function(e) {
+                e.stopPropagation();
+                fileInput.value = "";
+                dropzonePrompt.classList.remove("d-none");
+                fileSelectedInfo.classList.add("d-none");
+            });
+        }
+
+        // Drag & drop handlers
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropzone.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                dropzone.classList.add('dragover');
+            }, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropzone.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                dropzone.classList.remove('dragover');
+            }, false);
+        });
+
+        // Show loading screen on submit
+        form.addEventListener("submit", function(e) {
+            if (fileInput.files && fileInput.files.length > 0) {
+                loadingOverlay.classList.remove("d-none");
+            }
+        });
+    });
+</script>
+{% endblock %}

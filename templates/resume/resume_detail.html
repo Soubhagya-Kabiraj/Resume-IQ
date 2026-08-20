@@ -1,0 +1,311 @@
+{% extends "base.html" %}
+
+{% block title %}Resume Report - {{ resume.predicted_role|default:"Analysis" }}{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Top Action Bar -->
+    <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 mb-4">
+        <div>
+            <a href="{% url 'resume_history' %}" class="text-muted text-decoration-none small mb-1 d-inline-block">
+                <i class="bi bi-arrow-left me-1"></i> Back to Resume History
+            </a>
+            <h2 class="text-white fw-bold mb-0">
+                <i class="bi bi-file-earmark-person-fill text-primary me-2"></i>
+                {{ resume.resume_file.name|cut:"resumes/" }}
+            </h2>
+            <small class="text-white"><i class="bi bi-calendar3 me-1"></i> Uploaded on {{ resume.uploaded_at|date:"F j,Y, g:i a" }}</small>
+        </div>
+
+        <div class="d-flex flex-wrap gap-2">
+            <button onclick="window.print()" class="btn btn-glass">
+                <i class="bi bi-printer me-1"></i> Print Report
+            </button>
+            <a href="{% url 'upload_resume' %}" class="btn btn-glow">
+                <i class="bi bi-cloud-arrow-up-fill me-1"></i> Analyze Another
+            </a>
+            <button type="button" class="btn btn-danger-glass" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                <i class="bi bi-trash3 me-1"></i> Delete
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Score & Role Hero Cards -->
+    <div class="row g-4 mb-4">
+        <!-- ATS Score Gauge Card -->
+        <div class="col-lg-5">
+            <div class="card-glass p-4 h-100 text-center d-flex flex-column align-items-center justify-content-center">
+                <small class="text-muted fw-semibold uppercase mb-3">ATS Compatibility Score</small>
+
+                <div
+                    class="ats-score-badge mb-3 {% if resume.resume_score >= 80 %}high{% elif resume.resume_score >= 60 %}medium{% else %}low{% endif %}">
+                    {{ resume.resume_score|default:0 }}
+                </div>
+
+                <h4 class="text-white fw-bold mb-1">
+                    {% if resume.resume_score >= 80 %}
+                    <span class="text-success"><i class="bi bi-check-circle-fill me-1"></i> Excellent Match</span>
+                    {% elif resume.resume_score >= 60 %}
+                    <span class="text-warning"><i class="bi bi-exclamation-circle-fill me-1"></i> Moderate
+                        Compatibility</span>
+                    {% else %}
+                    <span class="text-danger"><i class="bi bi-x-circle-fill me-1"></i> Optimization Needed</span>
+                    {% endif %}
+                </h4>
+                <p class="text-muted small mb-0 max-w-300">
+                    Calculated based on technical skills, education keywords, project experience, and certification
+                    sections.
+                </p>
+            </div>
+        </div>
+
+        <!-- AI Role Match Card -->
+        <div class="col-lg-7">
+            <div class="card-glass p-4 h-100 d-flex flex-column justify-content-between">
+                <div>
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <span class="hero-badge mb-0"><i class="bi bi-cpu-fill text-warning me-1"></i> Machine Learning
+                            Classifier</span>
+                        <span
+                            class="badge bg-primary bg-opacity-20 text-white border border-primary px-3 py-1">Scikit-Learn
+                            TF-IDF</span>
+                    </div>
+
+                    <small class="text-muted d-block mb-1">Predicted Job Role</small>
+                    <h2 class="display-6 text-white fw-bold mb-3 gradient-text">
+                        {{ resume.predicted_role|default:"Pending Classification" }}
+                    </h2>
+
+                    <div class="bg-dark bg-opacity-50 p-3 rounded-3 border border-secondary border-opacity-25 mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="text-white small fw-semibold">Prediction Confidence</span>
+                            <span class="text-info fw-bold">{{ resume.confidence|default:0 }}%</span>
+                        </div>
+                        <div class="progress bg-secondary bg-opacity-30" style="height: 10px; border-radius: 5px;">
+                            <div class="progress-bar" role="progressbar"
+                                style="width: {{ resume.confidence|default:0 }}%; background: var(--grad-primary);"
+                                aria-valuenow="{{ resume.confidence }}" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div
+                    class="d-flex align-items-center justify-content-between text-white small pt-2 border-top border-secondary border-opacity-25">
+                    <div><i class="bi bi-file-earmark-text me-1"></i> Status: Analyzed</div>
+                    <div><i class="bi bi-shield-check text-success me-1"></i> Verified Vector</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detailed ATS Score Breakdown Card -->
+    <div class="card-glass p-4 mb-4">
+        <div class="d-flex align-items-center gap-2 mb-4 pb-2 border-bottom border-secondary border-opacity-25">
+            <i class="bi bi-bar-chart-line-fill text-info fs-4"></i>
+            <h4 class="text-white fw-bold mb-0">ATS Score Parameter Breakdown</h4>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="p-3 bg-dark bg-opacity-50 rounded-3 border border-secondary border-opacity-25">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="text-white fw-semibold small"><i class="bi bi-code-slash text-primary me-1"></i>
+                            Technical Skills</span>
+                        <span class="badge bg-primary text-white">{{ score_breakdown.skills }} / 40</span>
+                    </div>
+                    <div class="progress bg-secondary bg-opacity-30" style="height: 6px;">
+                        <div class="progress-bar bg-primary" role="progressbar"
+                            style="width: {% widthratio score_breakdown.skills 40 100 %}%;">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="p-3 bg-dark bg-opacity-50 rounded-3 border border-secondary border-opacity-25">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="text-white fw-semibold small"><i class="bi bi-folder-check text-purple me-1"
+                                style="color:#8b5cf6;"></i> Project Section</span>
+                        <span class="badge bg-purple text-white" style="background:#8b5cf6;">{{ score_breakdown.projects }} / 20</span>
+                    </div>
+                    <div class="progress bg-secondary bg-opacity-30" style="height: 6px;">
+                        <div class="progress-bar" role="progressbar"
+                            style="width: {% widthratio score_breakdown.projects 20 100 %}%; background: #8b5cf6;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="p-3 bg-dark bg-opacity-50 rounded-3 border border-secondary border-opacity-25">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="text-white fw-semibold small"><i class="bi bi-journal-bookmark text-info me-1"></i>
+                            Education Section</span>
+                        <span class="badge bg-info text-white">{{ score_breakdown.education }} / 15</span>
+                    </div>
+                    <div class="progress bg-secondary bg-opacity-30" style="height: 6px;">
+                        <div class="progress-bar bg-info" role="progressbar"
+                            style="width: {% widthratio score_breakdown.education 15 100 %}%;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="p-3 bg-dark bg-opacity-50 rounded-3 border border-secondary border-opacity-25">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="text-white fw-semibold small"><i class="bi bi-briefcase text-success me-1"></i>
+                            Work / Internship Experience</span>
+                        <span class="badge bg-success text-white">{{ score_breakdown.experience }} / 15</span>
+                    </div>
+                    <div class="progress bg-secondary bg-opacity-30" style="height: 6px;">
+                        <div class="progress-bar bg-success" role="progressbar"
+                            style="width: {% widthratio score_breakdown.experience 15 100 %}%;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="p-3 bg-dark bg-opacity-50 rounded-3 border border-secondary border-opacity-25">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="text-white fw-semibold small"><i class="bi bi-award text-warning me-1"></i>
+                            Certifications</span>
+                        <span class="badge bg-warning text-dark">{{ score_breakdown.certifications }} / 10</span>
+                    </div>
+                    <div class="progress bg-secondary bg-opacity-30" style="height: 6px;">
+                        <div class="progress-bar bg-warning" role="progressbar"
+                            style="width: {% widthratio score_breakdown.certifications 10 100 %}% ;">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Skill Gap & Job Recommendations Grid -->
+    <div class="row g-4 mb-4">
+        <!-- Skill Gap Analysis -->
+        <div class="col-lg-6">
+            <div class="card-glass p-4 h-100">
+                <div
+                    class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom border-secondary border-opacity-25">
+                    <h5 class="text-white fw-bold mb-0">
+                        <i class="bi bi-bullseye text-danger me-2"></i> Skill Gap Analysis
+                    </h5>
+                    <span class="badge bg-danger bg-opacity-20 text-white border border-danger border-opacity-30">
+                        {{ missing_skills|length }} Missing Skills
+                    </span>
+                </div>
+
+                {% if missing_skills %}
+                <p class="text-white small mb-3">
+                    To increase your ATS score for <strong>{{ resume.predicted_role }}</strong>, consider adding
+                    experience in the following skills:
+                </p>
+                <div class="d-flex flex-wrap gap-2 mb-3">
+                    {% for skill in missing_skills %}
+                    <span class="skill-chip skill-chip-missing">
+                        <i class="bi bi-plus-circle me-1"></i> {{ skill }}
+                    </span>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="p-4 text-center">
+                    <div class="rounded-circle bg-success bg-opacity-20 text-success mx-auto mb-3 d-flex align-items-center justify-content-center"
+                        style="width: 60px; height: 60px;">
+                        <i class="bi bi-check-lg fs-2"></i>
+                    </div>
+                    <h6 class="text-success fw-bold">No Critical Skill Gap Detected!</h6>
+                    <p class="text-muted small mb-0">Your resume contains all core skills required for {{
+                        resume.predicted_role }}.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Recommended Jobs -->
+        <div class="col-lg-6">
+            <div class="card-glass p-4 h-100">
+                <div
+                    class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom border-secondary border-opacity-25">
+                    <h5 class="text-white fw-bold mb-0">
+                        <i class="bi bi-briefcase-fill text-success me-2"></i> Recommended Career Roles
+                    </h5>
+                    <span class="badge bg-success bg-opacity-20 text-white border border-success border-opacity-30">
+                        Matches Found
+                    </span>
+                </div>
+
+                {% if recommended_jobs %}
+                <div class="d-flex flex-column gap-2">
+                    {% for job in recommended_jobs %}
+                    <div class="job-card">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="rounded-circle bg-primary bg-opacity-20 text-white p-2">
+                                <i class="bi bi-check2-square"></i>
+                            </div>
+                            <span class="text-white fw-semibold">{{ job }}</span>
+                        </div>
+                        <span class="badge bg-secondary bg-opacity-30 text-info">High Match</span>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted small">No specific career recommendations available.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Extracted Resume Text -->
+    <div class="card-glass p-4">
+        <div class="d-flex align-items-center justify-content-between mb-3">
+            <h5 class="text-white fw-bold mb-0">
+                <i class="bi bi-code-square text-info me-2"></i> Extracted Resume Content
+            </h5>
+            <button class="btn btn-sm btn-glass" onclick="copyExtractedText()">
+                <i class="bi bi-clipboard me-1"></i> Copy Raw Text
+            </button>
+        </div>
+
+        <div class="terminal-box" id="extractedTextContainer">
+            {{ resume.extracted_text }}
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content card-glass border-secondary">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title text-white fw-bold"><i
+                        class="bi bi-exclamation-triangle-fill text-danger me-2"></i> Confirm Deletion</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                    aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-white">
+                Are you sure you want to delete this resume report ? This action cannot be undone.
+            </div>
+            <div class="modal-footer border-secondary">
+                <button type="button" class="btn btn-glass" data-bs-dismiss="modal">Cancel</button>
+                <form method="POST" action="{% url 'delete_resume' resume.pk %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-trash3 me-1"></i> Delete Resume
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function copyExtractedText() {
+        const text = document.getElementById("extractedTextContainer").innerText;
+        navigator.clipboard.writeText(text).then(() => {
+            alert("Extracted text copied to clipboard!");
+        });
+    }
+</script>
+{% endblock %}

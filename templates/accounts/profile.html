@@ -1,0 +1,166 @@
+{% extends "base.html" %}
+
+{% block title %}Account Overview & Profile - ResumeIQ{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Profile Hero Card -->
+    <div class="card-glass p-4 p-md-5 mb-4 position-relative overflow-hidden">
+        <div class="row align-items-center g-4">
+            <div class="col-md-8">
+                <div class="d-flex align-items-center gap-4">
+                    <div class="rounded-circle bg-gradient-indigo text-white d-flex align-items-center justify-content-center shadow-lg" style="width: 80px; height: 80px; font-size: 2.2rem; font-weight: 800; background: var(--grad-primary); border: 3px solid rgba(255, 255, 255, 0.2);">
+                        {{ user.username|slice:":1"|upper }}
+                    </div>
+                    <div>
+                        <div class="hero-badge mb-2"><i class="bi bi-person-check-fill text-success me-1"></i> Verified Account</div>
+                        <h2 class="display-6 fw-extrabold text-white mb-1">
+                            {% if user.first_name %}{{ user.first_name }} {{ user.last_name }}{% else %}{{ user.username }}{% endif %}
+                        </h2>
+                        <div class="d-flex flex-wrap align-items-center gap-3 text-muted small">
+                            <span><i class="bi bi-at me-1"></i>{{ user.username }}</span>
+                            <span>•</span>
+                            <span><i class="bi bi-envelope me-1"></i>{{ user.email|default:"No email set" }}</span>
+                            <span>•</span>
+                            <span><i class="bi bi-calendar3 me-1"></i>Joined {{ user.date_joined|date:"M Y" }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4 text-md-end">
+                <a href="{% url 'upload_resume' %}" class="btn btn-glow py-2 px-4">
+                    <i class="bi bi-cloud-arrow-up-fill me-1"></i> Upload Resume
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Account Stats Widgets -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-4">
+            <div class="stat-card">
+                <div class="stat-icon bg-primary bg-opacity-20 text-primary">
+                    <i class="bi bi-file-earmark-pdf-fill"></i>
+                </div>
+                <div>
+                    <h3 class="mb-0 fw-extrabold text-white">{{ total_resumes }}</h3>
+                    <small class="text-muted">Total Resumes Uploaded</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="stat-card">
+                <div class="stat-icon bg-success bg-opacity-20 text-success">
+                    <i class="bi bi-trophy-fill"></i>
+                </div>
+                <div>
+                    <h3 class="mb-0 fw-extrabold text-white">{{ highest_score }} / 100</h3>
+                    <small class="text-muted">Highest ATS Score</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="stat-card">
+                <div class="stat-icon bg-info bg-opacity-20 text-info">
+                    <i class="bi bi-cpu-fill"></i>
+                </div>
+                <div>
+                    <h6 class="mb-0 fw-bold text-white text-truncate" style="max-width: 180px;">
+                        {% if latest_resume and latest_resume.predicted_role %}
+                            {{ latest_resume.predicted_role }}
+                        {% else %}
+                            N/A
+                        {% endif %}
+                    </h6>
+                    <small class="text-muted">Latest Predicted Role</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Profile Management Grid -->
+    <div class="row g-4">
+        <!-- Edit Profile Form -->
+        <div class="col-lg-6">
+            <div class="card-glass p-4 h-100">
+                <div class="d-flex align-items-center gap-2 mb-4 pb-2 border-bottom border-secondary border-opacity-25">
+                    <i class="bi bi-person-gear fs-4 text-primary"></i>
+                    <h4 class="text-white fw-bold mb-0">Personal Information</h4>
+                </div>
+
+                <form method="POST">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="update_info">
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label-custom">First Name</label>
+                            <input type="text" name="first_name" class="form-control form-control-dark" value="{{ user.first_name }}" placeholder="First Name">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label-custom">Last Name</label>
+                            <input type="text" name="last_name" class="form-control form-control-dark" value="{{ user.last_name }}" placeholder="Last Name">
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label-custom">Username (Read-Only)</label>
+                        <input type="text" class="form-control form-control-dark opacity-75" value="{{ user.username }}" readonly disabled>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label-custom">Email Address</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-dark bg-opacity-70 border-secondary border-opacity-25 text-muted">
+                                <i class="bi bi-envelope"></i>
+                            </span>
+                            <input type="email" name="email" class="form-control form-control-dark" value="{{ user.email }}" placeholder="name@example.com" required>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-glow w-100 py-3">
+                        <i class="bi bi-check-circle me-1"></i> Save Profile Changes
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Change Password Form -->
+        <div class="col-lg-6">
+            <div class="card-glass p-4 h-100">
+                <div class="d-flex align-items-center gap-2 mb-4 pb-2 border-bottom border-secondary border-opacity-25">
+                    <i class="bi bi-shield-lock fs-4 text-warning"></i>
+                    <h4 class="text-white fw-bold mb-0">Account Security</h4>
+                </div>
+
+                <form method="POST">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="change_password">
+
+                    <div class="mb-3">
+                        <label class="form-label-custom">Current Password</label>
+                        <input type="password" name="current_password" class="form-control form-control-dark" placeholder="Enter current password" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label-custom">New Password</label>
+                        <input type="password" name="new_password" class="form-control form-control-dark" placeholder="Enter new password (min. 6 chars)" required>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label-custom">Confirm New Password</label>
+                        <input type="password" name="confirm_password" class="form-control form-control-dark" placeholder="Re-enter new password" required>
+                    </div>
+
+                    <button type="submit" class="btn btn-glass w-100 py-3 text-warning border-warning border-opacity-30">
+                        <i class="bi bi-key-fill me-1"></i> Update Password
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
