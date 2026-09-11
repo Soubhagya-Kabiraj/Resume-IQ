@@ -22,7 +22,7 @@
 ## 🚀 Key Features
 
 ### 🤖 AI Job Role Classifier
-- **TF-IDF & Naive Bayes Pipeline**: Scans extracted resume text to classify candidates into industry job profiles with model confidence metrics..
+- **TF-IDF & Naive Bayes Pipeline**: Scans extracted resume text to classify candidates into industry job profiles with model confidence metrics.
 - **NLP Text Parser**: Fast, local PDF parsing powered by `pdfplumber` ensuring zero data leakage.
 
 ### 🎯 ATS Score & Parameter Breakdown
